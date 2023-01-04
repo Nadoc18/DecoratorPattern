@@ -10,7 +10,7 @@ public class AbilityRunner : MonoBehaviour
     public void UseAbility()
     {
         //You can pass SFX VFX by Parameters for example 
-        currentAbility.Use(gameObject);
+        currentAbility.Use();
     }
 
     private void Update()
@@ -24,49 +24,55 @@ public class AbilityRunner : MonoBehaviour
 
 public interface IAbility
 {
-    void Use(GameObject p_currentObject);
+    void Use();
 }
 
 
-public class DelayedDecorator : IAbility
+public class DelayedDecorator : MonoBehaviour, IAbility
 {
     private IAbility wrappedAbility;
+    private float delayTime = 2f;
 
     public DelayedDecorator(IAbility wrappedAbility)
     {
         this.wrappedAbility = wrappedAbility;
     }
 
-    public void Use(GameObject p_currentObject)
+    public void Use()
     {
-        wrappedAbility.Use(p_currentObject);
+        StartCoroutine(UseWithDelay(wrappedAbility));  
+    }
+    private IEnumerator UseWithDelay(IAbility wrappedAbility)
+    {
+        yield return new WaitForSeconds(delayTime);
+        wrappedAbility.Use();
     }
 }
 
-public class CoolDownDecorator : IAbility
+public class CoolDownDecorator : MonoBehaviour, IAbility
 {
     private IAbility wrappedAbility;
     private bool m_canUseAbility;
+    private float timeToReload;
 
     public CoolDownDecorator(IAbility wrappedAbility)
     {
         this.wrappedAbility = wrappedAbility;
     }
 
-    public void Use(GameObject p_currentObject)
+    public void Use()
     {
         if (m_canUseAbility)
         {
-            wrappedAbility.Use(p_currentObject);
+            wrappedAbility.Use();
+            m_canUseAbility = false;
             CoolDown();
         }
     }
 
-    private void CoolDown()
+    private IEnumerator CoolDown()
     {
-        //TODO:  Do CoolDown
-        m_canUseAbility = false;
-        //At end 
+        yield return new WaitForSeconds(timeToReload);
         m_canUseAbility = true;
     }
 }
